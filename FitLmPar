@@ -1,0 +1,20 @@
+require(foreach)
+require(doMC)
+
+FitLmPar <- function(data, model, cores=1, inorder=FALSE) {
+
+  registerDoMC(cores=cores)
+  
+  results <- foreach(i=1:nrow(data),.combine=rbind, .inorder=inorder) %dopar% {
+    formula <- as.formula(paste("data[",i,",] ~ ", model))
+    if(i%%1000==0)print(i)
+    test <-try(summary(lm(formula))$coefficients[2,])
+    if(!inherits(test, "try-error")){
+        test
+      } else { 
+        rep(NA, 4)
+      }
+  }
+  rownames(results) <- rownames(data)
+  return(results)
+}
